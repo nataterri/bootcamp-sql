@@ -106,7 +106,45 @@ select * from customer where join_date >= str_to_date('2023-01-01','%Y-%m-%d') a
 
 -- where: >, <, >=, <=
 -- ifnull() function: Treat null value as another specified value
-select * from customer where ifnull(score,100) >= 0 and ifnull(score,100) < 1000;
+select * from customer where ifnull(score,100) > 0 and ifnull(score,100) < 1000;
+select * from customer where coalesce(score,100) > 0 and coalesce(score,100) < 1000;
+
+-- alter table -> drop column
+alter table customer add dummy VARCHAR(10);
+alter table customer drop column dummy;
+
+-- alter table -> modify column
+-- Extend length of the column
+alter table customer modify column cust_email_addr varchar(50); 
+-- Shorten the length of the column
+-- alter table customer modify column cust_email_addr varchar(10); -- error, existed data's length 
+
+-- Find the customer with score > 100, and showing the id, cust_name, join_date of the result set.
+select id, cust_name, join_date from customer where score > 100;
+
+-- IS NULL, IS NOT NULL
+select id, score from customer where score is not null;
+
+-- String Function
+select upper(c.cust_name) as customer_name_upper_case
+, lower(c.cust_name) as customer_name_lower_case
+, c.cust_name as customer_name
+, length(c.cust_name) as customer_name_length
+, substring(c.cust_name,1 ,3) as customer_name_prefix
+, concat(c.cust_name, ',email address:', c.cust_email_addr) as customer_info
+, replace(c.cust_name, 'Lau', 'Chan') as new_customer_name
+, left(c.cust_name, 3) -- retrieve characters from left to right
+, right(c.cust_name, 2) -- retrieve characters from right to left
+, trim(c.cust_name) -- remove leading and tall spaces
+, replace(c.cust_name, ' ','') -- remove all spaces
+from customer c;
+
+
+
+
+
+
+
 
 
 
