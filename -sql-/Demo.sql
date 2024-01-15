@@ -139,6 +139,180 @@ select upper(c.cust_name) as customer_name_upper_case
 , replace(c.cust_name, ' ','') -- remove all spaces
 from customer c;
 
+-- MySQL case-insensitive
+select * from customer where cust_name = 'Mary Lau';
+select * from customer where cust_name = 'mary lau'; -- still can return, case-insensitive
+select * from customer where cust_name COLLATE utf8mb4_bin = 'Mary Lau'; -- case sensitive check in MYSQL
+
+-- Like: %, _
+select * from customer where cust_name like '_ohn%'; -- There is only one character before 'o'
+select * from customer where cust_name like '_John%'; -- 
+
+-- Math
+update customer set score = 12.14 where id = 1;
+update customer set score = 12.15 where id = 2;
+update customer set score = 12.16 where id = 3;
+
+select c.*
+, 1 as one
+, 'dummy value' as dummy_column 
+, round(c.score, 1) rounded_score
+, ceil(c.score) as ceiling_value
+, floor(c.score) as ceiling_value
+, abs(score) as abs_value
+, power(score, 2) as power2_score
+, date_add(join_date, interval 3 month) as three_month_after_join_date
+, date_add(join_date, interval 3 day) as three_day_after_join_date
+, date_add(join_date, interval 3 year) as three_year_after_join_date
+, date_sub(join_date, interval 3 day) as three_day_before_join_date
+, join_date + interval 1 day -- correct
+, join_date - 1 -- wrong syntax in MYSQL
+, join_date - interval 1 day -- correct
+, datediff('1990-12-31', join_date) as number_of_days_between_joindate_1990_12_31
+, datediff(join_date, join_date)
+, now() as curr_timestamp
+from customer c;
+
+-- CASE
+select cust_name, score,
+	case
+		when score < 20 then 'Fail'
+        when score < 100 then 'Pass'
+        when score < 1000 then 'Excellent'
+        else 'N/A'
+	end as grade
+from customer;
+
+-- primary key is one of the constraint: not null, unique, index
+create table department (
+	id integer primary key, -- 1,2,3,4,5,6,7,8,9
+    dept_name varchar(50),
+    dept_code varchar(10) -- HR, IT
+);
+
+create table employee (
+	id integer primary key,  -- 1,2,3,4
+    staff_id varchar(50) unique,
+    staff_name varchar(50),
+    hkid varchar(10) unique,
+    dept_id integer,
+    foreign key (dept_id) references department(id)
+);
+
+create table employee_contact_info (
+	id integer primary key,  -- 1,2,3,4
+    phone varchar(50),
+    staff_id varchar(50) unique,
+    foreign key (staff_id) references employee(staff_id)
+);
+
+insert into employee_contact_info values (1, '12345');
+
+alter table employee add country_id integer;
+alter table employee add constraint fk_country_id foreign key (country_id) references country(id);
+
+create table country (
+	id integer primary key,
+    country_code varchar(2) unique,
+    description varchar(50)
+);
+insert into department values (1, 'Human Resource', 'HR');
+insert into department values (2, 'Information Technology', 'IT');
+
+insert into employee values (1, '001', 'John Lau', 'A1234567', 2);
+insert into employee values (2, '002', 'Mary Chan', 'A1234568', 1);
+-- insert into employee values (3, '003', 'Jenny Wong', 'A1234569', 3); -- error, because dept_id 3 does not exists in table department
+insert into employee values (3, '003', 'Sunny Lau', 'A1234598', 2);
+
+-- inner join
+select * 
+from employee inner join department;
+
+select e.id, e.staff_id, e.staff_name, d.dept_name, d.dept_code
+from employee e inner join department d on e.dept_id = d.id;
+
+select * from employee;
+insert into country values (1, 'HK', 'Hong Kong');
+insert into country values (2, 'US', 'U.S.');
+update employee set country_id = 1;
+
+select e.id, e.staff_id, e.staff_name, d.dept_name, d.dept_code, c.country_code, c.description
+from employee e 
+inner join department d on e.dept_id = d.id
+inner join country c on e.country_id = c.id
+where d.dept_code = 'IT';
+
+-- inner join without key, all records join (Inner join demo in a wrong way)
+select e.id, e.staff_id, e.staff_name, d.dept_name, d.dept_code, c.country_code, c.description
+from employee e 
+inner join department d
+inner join country c;
+
+-- Another approach to perform inner join
+select e.id, e.staff_id, e.staff_name, d.dept_name, d.dept_code
+from employee e, department d
+where e.dept_id = d.id
+and d.dept_code = 'IT'
+order by e.staff_name desc;
+
+-- Left Join
+insert into department values (3, 'Marketing', 'MK');
+
+select d.*, e.*
+from department d left join employee e on e.dept_id = d.id;
+
+-- group by
+select * from employee;
+insert into employee values (4, '005', 'Peter Chan', 'A123456333', 3, 2);
+
+-- count() -> aggregation function
+select e.dept_id, count(1) as number_of_employee
+from employee e
+group by e.dept_id;
+
+select e.*, 1 as one
+from employee e;
+
+-- add column year_of_exp 
+alter table employee add year_of_exp integer;
+select * from employee ;
+update employee set year_of_exp = 1 where id = 2;
+update employee set year_of_exp = 10 where id = 1;
+update employee set year_of_exp = 5 where id = 3;
+update employee set year_of_exp = 18 where id = 4;
+
+-- group by: max(year_of_exp)
+select e.dept_id, min(year_of_exp), avg(year_of_exp)
+from employee e
+group by e.dept_id;
+
+-- Find staff_name who has the max year of exp
+-- select max(year_of_exp), staff_name from employee
+-- Sub query
+select *
+from employee
+where year_of_exp = (select max(year_of_exp) from employee);
+
+-- CTE
+with max_year_of_exp as (
+	select max(year_of_exp) as max_exp
+    from employee
+), min_year_of_exp as (
+	select min(year_of_exp) as min_exp
+    from employee
+)
+select *
+from employee e, max_year_of_exp m
+where e.year_of_exp = m.max_exp;
+
+-- group by + join
+select e.dept_id, count(1) as number_of_employee
+from employee e, department d
+where e.dept_id = d.id
+and d.dept_code in ('IT', 'MK') -- filter record before group by
+group by e.dept_id 
+having count(1) > 1 -- filter group after group by
+;
 
 
 
