@@ -11,6 +11,7 @@ CREATE TABLE LOCATIONS (
     city VARCHAR(30),
     state_province VARCHAR(12),
     country_id CHAR(2)
+    FOREIGN KEY (
 );
 
 CREATE TABLE COUNTRIES (
@@ -19,6 +20,12 @@ CREATE TABLE COUNTRIES (
     region_id INT
 );
 
+CREATE TABLE REGIONS (
+    region_id INT,
+    region_name VARCHAR(25)
+);
+    
+    
 CREATE TABLE DEPARTMENTS (
     department_id INT PRIMARY KEY,
     department_name VARCHAR(30),
@@ -121,9 +128,7 @@ drop table departments;
 drop table countries;
 drop table locations;
 
-
-
-
+delete from locations;
 
 
 
